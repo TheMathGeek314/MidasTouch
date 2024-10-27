@@ -10,7 +10,7 @@ using Satchel;
 namespace MidasTouch {
     public class MidasTouch: Mod, ILocalSettings<settings> {
         new public string GetName() => "MidasTouch";
-        public override string GetVersion() => "1.0.0.0";
+        public override string GetVersion() => "1.0.1.0";
 
         static int frameCount;
         const int drainSpeed = 25;
@@ -28,6 +28,7 @@ namespace MidasTouch {
             On.HealthManager.TakeDamage += takeDamage;
             On.HealthManager.SendDeathEvent += sendDeathEvent;
             On.HeroController.FixedUpdate += heroFixedUpdate;
+            On.GameManager.OnNextLevelReady += sceneChange;
 
             shinyPrefab = preloadedObjects["Fungus1_14"]["Shiny Item"];
         }
@@ -36,6 +37,16 @@ namespace MidasTouch {
             return new List<(string, string)> {
                 ("Fungus1_14", "Shiny Item")
             };
+        }
+
+        private void sceneChange(On.GameManager.orig_OnNextLevelReady orig, GameManager self) {
+            orig(self);
+            if(self.sceneName == "Ruins_House_02") {
+                if(PlayerData.instance.killedGorgeousHusk && !Charms["MidasTouch"].GotCharm) {
+                    spawnMidasCharmObject(new Vector3(55.5f, 7), false);
+                }
+                
+            }
         }
 
         private void fsmOnEnable(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
@@ -63,12 +74,7 @@ namespace MidasTouch {
         private void sendDeathEvent(On.HealthManager.orig_SendDeathEvent orig, HealthManager self) {
             orig(self);
             if(self.gameObject.name == "Gorgeous Husk") {
-                GameObject charm = GameObject.Instantiate(shinyPrefab, self.gameObject.transform.position, Quaternion.identity);
-                charm.SetActive(true);
-                FsmVariables vars = charm.LocateMyFSM("Shiny Control").FsmVariables;
-                vars.GetFsmInt("Charm ID").Value = Charms["MidasTouch"].Id;
-                vars.GetFsmBool("Fling On Start").Value = true;
-                vars.GetFsmString("PD Bool Name").Value = "";
+                spawnMidasCharmObject(self.gameObject.transform.position, true);
             }
         }
 
@@ -113,7 +119,16 @@ namespace MidasTouch {
             }
         }
 
-		private object reflectValue(HealthManager self, string fieldName) {
+        private void spawnMidasCharmObject(Vector3 position, bool flingOnStart) {
+            GameObject charm = GameObject.Instantiate(shinyPrefab, position, Quaternion.identity);
+            charm.SetActive(true);
+            FsmVariables vars = charm.LocateMyFSM("Shiny Control").FsmVariables;
+            vars.GetFsmInt("Charm ID").Value = Charms["MidasTouch"].Id;
+            vars.GetFsmBool("Fling On Start").Value = flingOnStart;
+            vars.GetFsmString("PD Bool Name").Value = "";
+        }
+        
+        private object reflectValue(HealthManager self, string fieldName) {
 			return typeof(HealthManager).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance).GetValue(self);
 		}
 
