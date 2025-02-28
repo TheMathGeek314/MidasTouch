@@ -10,7 +10,7 @@ using Satchel;
 namespace MidasTouch {
     public class MidasTouch: Mod, ILocalSettings<settings> {
         new public string GetName() => "MidasTouch";
-        public override string GetVersion() => "1.0.1.0";
+        public override string GetVersion() => "1.0.1.1";
 
         static int frameCount;
         const int drainSpeed = 25;
@@ -18,8 +18,8 @@ namespace MidasTouch {
 
         GameObject shinyPrefab;
 
-        internal settings localSettings = new settings();
-        internal static Dictionary<string, EasyCharm> Charms = new Dictionary<string, EasyCharm> {
+        internal settings localSettings = new();
+        internal static Dictionary<string, EasyCharm> Charms = new() {
             {"MidasTouch", new MidasCharm() },
         };
 
@@ -52,7 +52,7 @@ namespace MidasTouch {
         private void fsmOnEnable(On.PlayMakerFSM.orig_OnEnable orig, PlayMakerFSM self) {
             orig(self);
             if(self.gameObject.name.StartsWith("Shiny Item") && self.FsmName == "Shiny Control") {
-                self.GetState("Get Charm").InsertAction(new GrantCharm(), 0);
+                self.GetValidState("Get Charm").InsertAction(new GrantCharm(), 0);
             }
         }
 
