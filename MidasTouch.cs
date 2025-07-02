@@ -10,7 +10,7 @@ using Satchel;
 namespace MidasTouch {
     public class MidasTouch: Mod, ILocalSettings<settings> {
         new public string GetName() => "MidasTouch";
-        public override string GetVersion() => "1.0.1.1";
+        public override string GetVersion() => "1.1.0.0";
 
         static int frameCount;
         const int drainSpeed = 25;
@@ -31,6 +31,10 @@ namespace MidasTouch {
             On.GameManager.OnNextLevelReady += sceneChange;
 
             shinyPrefab = preloadedObjects["Fungus1_14"]["Shiny Item"];
+
+            if(ModHooks.GetMod("DebugMod") is Mod) {
+                HookDebug();
+            }
         }
 
         public override List<(string, string)> GetPreloadNames() {
@@ -152,6 +156,22 @@ namespace MidasTouch {
             }
             return localSettings;
 		}
+
+        private void HookDebug() {
+            DebugMod.BindableFunctions.OnGiveAllCharms += () => {
+                foreach(var charm in Charms.Values) {
+                    charm.GiveCharm();
+                }
+                PlayerData.instance.CountCharms();
+            };
+
+            DebugMod.BindableFunctions.OnRemoveAllCharms += () => {
+                foreach(var charm in Charms.Values) {
+                    charm.TakeCharm();
+                }
+                PlayerData.instance.CountCharms();
+            };
+        }
 	}
 
     public class MidasCharm: EasyCharm {
